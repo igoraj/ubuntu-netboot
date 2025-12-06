@@ -1,0 +1,45 @@
+name: Build Alpine Cloud Overlay
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - './**'
+      - '.github/workflows/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Make Script Executable
+        run: chmod +x build.sh
+
+      - name: Build Overlay
+        run: ./build.sh
+
+      - name: Upload Artifact (Temporary)
+        uses: actions/upload-artifact@v4
+        with:
+          name: alpine-cloud-overlay
+          path: alpine-cloud-init.apkovl.tar.gz
+          retention-days: 5
+
+      # Optional: Release it so your PXE server has a stable URL
+      - name: Create Release
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: alpine-cloud-init.apkovl.tar.gz
+          tag_name: latest
+          name: Latest Cloud Overlay
+          draft: false
+          prerelease: false
+          # Note: You might want to use specific version tags in production
